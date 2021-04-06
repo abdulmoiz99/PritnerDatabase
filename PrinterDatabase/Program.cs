@@ -9,93 +9,61 @@ namespace PrinterDatabase
 {
     static class Program
     {
-        static FileSystemWatcher watcher;
+        static string directoryPath = @"C:\Windows\System32\spool\PRINTERS";
+        static string backupFolderPath = @"G:\Backup";
 
         static void Main()
         {
 
-            File.Delete(@"C:\Windows\System32\spool\PRINTERS\00046.SPL");
-
-            System.Timers.Timer aTimer = new System.Timers.Timer();
-            aTimer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
-            aTimer.Interval = 1000;
-            aTimer.Enabled = true;
-
-            Console.Read();
-
-
-            //ReadFile(@"D:\Documents\Visual Studio 2019\SPL\00137.SPL");
-        }
-        private static void OnTimedEvent(object source, ElapsedEventArgs e)
-        {
-            CheckNewFile();
-        }
-        public static void ReadFile(string path)
-        {
-            string time, date, pincode, totalUnit, totalValue;
-
-            string[] lines = File.ReadAllLines(path);
-
-            //For DateTime
-            time = lines[4];
-            date = time.Split(' ')[0];
-            time = time.Replace(date, "");
-            time = time.TrimStart(' ');
-            Console.WriteLine("Time: " + time);
-            Console.WriteLine("Date: " + date);
-
-            //For Pincode
-            pincode = lines[16] + lines[17];
-            pincode = pincode.Replace(" ", "");
-            pincode = pincode.Replace("*", "");
-            Console.WriteLine("Pincode: " + pincode);
-
-            //For Total Unit
-            totalUnit = FindLine(lines, "Totales");
-            totalUnit = totalUnit.Split(' ')[totalUnit.Split(' ').Length - 1];
-            Console.WriteLine("Total Unit: " + totalUnit);
-
-            //For Total Value
-            totalValue = FindLine(lines, "Valeur");
-            totalValue = totalValue.Split(' ')[totalValue.Split(' ').Length - 2];
-            Console.WriteLine("Total Value: " + totalValue);
-        }
-
-        public static string FindLine(string[] lines, string word) 
-        {
-            foreach (string line in lines) 
+            if (TestDatabaseConnection() && VerifyBackupFolder())
             {
-                if (line.Contains(word)) 
+                while (true)
                 {
-                    return line;
+                    DirectoryInfo d = new DirectoryInfo(directoryPath);
+                    FileInfo[] Files = d.GetFiles("*.spl");
+                    foreach (FileInfo file in Files)
+                    {
+                        Console.WriteLine(file.Name);
+                        CreateBackup(file.FullName, "06/04/2021 09:39:36", " 07 11653284 2");
+                        DeleteFile(file.Name);
+                        Thread.Sleep(3000);
+                    }
+
+
                 }
             }
-            return string.Empty;
         }
-       
-        public static void TestDatabaseConnection()
+        public static bool TestDatabaseConnection()
         {
+            return true;
+        }
+        public static bool VerifyBackupFolder()
+        {
+            bool exists = System.IO.Directory.Exists(backupFolderPath);
 
-        }
-        public static void VerifyBackupFolder()
-        {
+            if (!exists)
 
-        }
-        public static bool CheckNewFile()
-        {
-            DirectoryInfo d = new DirectoryInfo(@"C:\Windows\System32\spool\PRINTERS");//Assuming Test is your Folder
-            FileInfo[] Files = d.GetFiles("*.spl"); //Getting Text files
-            string str = "";
-            foreach (FileInfo file in Files)
             {
-                str = str + ", " + file.Name;
-                Console.WriteLine(file.Name);
+                System.IO.Directory.CreateDirectory(backupFolderPath);
+                Console.WriteLine("Backup Folder Created:  " + backupFolderPath);
             }
             return true;
         }
-
-        public static void CreateBackup()
+        public static void DeleteFile(string fileName)
         {
+            string filepath = directoryPath + @"\" + fileName;
+            File.Delete(filepath); // delete SPL File
+            Console.WriteLine("File Deleted:  " + fileName);
+            File.Delete(filepath); // delete SHL File
+        }
+
+        public static void CreateBackup(string sourcefilePath, string DateTime, string NsComputer)
+        {
+
+            string backupFilePath = backupFolderPath + "\\" + DateTime.Replace(@"/", "-").Replace(":","-") + " " + NsComputer.Replace(" ", string.Empty) + ".txt";
+
+            File.WriteAllLines(backupFilePath, File.ReadAllLines(sourcefilePath));
+            Console.WriteLine("Backup Craeted:  " + backupFilePath);
 
         }
         /// <summary>
@@ -111,5 +79,5 @@ namespace PrinterDatabase
 
         }
     }
-   
+
 }
