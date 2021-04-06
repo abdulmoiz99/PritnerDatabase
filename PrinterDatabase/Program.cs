@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Timers;
+using System.Configuration;
 
 namespace PrinterDatabase
 {
@@ -14,7 +15,6 @@ namespace PrinterDatabase
 
         static void Main()
         {
-
             if (TestDatabaseConnection() && VerifyBackupFolder())
             {
                 while (true)
@@ -23,8 +23,10 @@ namespace PrinterDatabase
                     FileInfo[] Files = d.GetFiles("*.spl");
                     foreach (FileInfo file in Files)
                     {
+                        Console.WriteLine("\n\n============" + DateTime.Now + "============");
                         Console.WriteLine(file.Name);
-                        CreateBackup(file.FullName, "06/04/2021 09:39:36", " 07 11653284 2");
+                        var data = DataExtractor.Extract(file.FullName);
+                        CreateBackup(file.FullName, data.date + " " + data.time, data.meterID); //MEter ID = N§ Compteur 
                         DeleteFile(file.Name);
                         Thread.Sleep(3000);
                     }
@@ -60,7 +62,7 @@ namespace PrinterDatabase
         public static void CreateBackup(string sourcefilePath, string DateTime, string NsComputer)
         {
 
-            string backupFilePath = backupFolderPath + "\\" + DateTime.Replace(@"/", "-").Replace(":","-") + " " + NsComputer.Replace(" ", string.Empty) + ".txt";
+            string backupFilePath = backupFolderPath + "\\" + DateTime.Replace(@"/", "-").Replace(":", "-") + " " + NsComputer.Replace(" ", string.Empty) + ".txt";
 
             File.WriteAllLines(backupFilePath, File.ReadAllLines(sourcefilePath));
             Console.WriteLine("Backup Craeted:  " + backupFilePath);
