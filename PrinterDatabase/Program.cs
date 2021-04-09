@@ -15,6 +15,8 @@ namespace PrinterDatabase
 
         static void Main()
         {
+
+            backupFolderPath = ConfigurationManager.AppSettings["backupPath"];
             if (TestDatabaseConnection() && VerifyBackupFolder())
             {
                 while (true)
